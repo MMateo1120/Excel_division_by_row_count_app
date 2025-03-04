@@ -1,6 +1,6 @@
 # Excel Division by Row Count App
 
-A simple tool to divide an Excel file into multiple smaller files based on the number of rows.
+A simple tool to divide an Excel file into multiple smaller files based on the number of rows. 
 
 ## Usage
 
@@ -16,7 +16,15 @@ A simple tool to divide an Excel file into multiple smaller files based on the n
 
 6. Enter the name of the new excels (e.g. '_Student' for '1_Student.xlsx', '2_Student.xlsx', etc.).
 
-7. Click the "Submit" button to divide the Excel file. You are done.
+7. Choose one of the options for dividing the Excel file:
+
+    - "Keep the style of the cells" to retain all cell styles.
+
+    - "No style (date and custom formats still kept)" to keep only date and custom formats.
+
+    - "Much faster no style" for a quicker operation without retaining custom formats. Note: Dates will be converted to include hours, minutes, and seconds.
+
+8. Click the "Submit" button to divide the Excel file. You are done.
 
 ## Requirements
 
@@ -26,6 +34,7 @@ A simple tool to divide an Excel file into multiple smaller files based on the n
 - Pillow
 - requests
 - math
+- pandas
 
 ## Installation
 
@@ -33,7 +42,7 @@ A simple tool to divide an Excel file into multiple smaller files based on the n
 - Install the required packages by running the following command in the command line:
 
 ```bash
-pip install openpyxl tkinter Pillow requests
+pip install openpyxl tkinter Pillow requests pandas
 ```
 
 ## Author
@@ -42,5 +51,5 @@ pip install openpyxl tkinter Pillow requests
 
 ## Version
 
-- 1.0.0
+- 1.1.0
 

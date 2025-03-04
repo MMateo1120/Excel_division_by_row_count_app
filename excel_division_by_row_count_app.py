@@ -8,6 +8,7 @@ import requests
 from io import BytesIO
 from PIL import Image, ImageTk
 import math
+import pandas as pd
 
 root = tk.Tk()
 root.title("Excel Division by row count")
@@ -40,6 +41,16 @@ tk.Entry(root, textvariable=excel_name_var, width=50).grid(row=5, column=1, padx
 # Button to open file dialog
 tk.Button(root, text="Browse", command=lambda: open_name_var.set(filedialog.askopenfilename())).grid(row=0, column=2, padx=10, pady=5)
 tk.Button(root, text="Browse", command=lambda: save_name_var.set(filedialog.askdirectory())).grid(row=4, column=2, padx=10, pady=5)
+# Create a label and a set of radio buttons for multiple choice
+tk.Label(root, text="Select one:").grid(row=6, column=0, padx=10, pady=5, sticky="e")
+
+# Variable to store the selected option
+choice_var = tk.StringVar(value="style")
+
+# Radio buttons for the options
+tk.Radiobutton(root, text="Keep the style of the cells", variable=choice_var, value="style").grid(row=6, column=1, sticky="w")
+tk.Radiobutton(root, text="No style (date and custom formats still kept)", variable=choice_var, value="no_style").grid(row=7, column=1, sticky="w")
+tk.Radiobutton(root, text="Much faster no style (custom formats may not kept, date in '2002.07.17  0:00:00' format \n(convertable in excel))", variable=choice_var, value="no_style_faster", wraplength=300, anchor="w", justify="left").grid(row=8, column=1, sticky="w")
 
 try:
     response = requests.get("https://raw.githubusercontent.com/MMateo1120/Excel_division_app/refs/heads/main/mz6axvogusy31.jpg")
@@ -53,65 +64,124 @@ except:
 
 # Function to submit and close
 def submit():
-    global open_name, sheet_name, sheet_name_new, row_count, save_name, excel_name
+    global open_name, sheet_name, sheet_name_new, row_count, save_name, excel_name, method
     open_name = open_name_var.get()
     row_count = row_count_var.get()
     sheet_name = sheet_name_var.get()
     sheet_name_new = sheet_name_new_var.get()
     save_name = save_name_var.get()
     excel_name = excel_name_var.get()
+    method = choice_var.get()
     root.destroy()
 
 # Submit button
-tk.Button(root, text="Submit", command=submit).grid(row=6, column=2, padx=10, pady=10)
+tk.Button(root, text="Submit", command=submit, width=20, height=3).grid(row=10, column=1, padx=10, pady=10)
 root.mainloop()
 
-#Excel load
-wb = load_workbook(open_name)
-ws = wb[sheet_name]
+if method == "style":
+    #Excel load
+    wb = load_workbook(open_name)
+    ws = wb[sheet_name]
 
-#Get the header
-header = []
-for cell_row in ws[1]:
-    header.append(cell_row.value)
-
-#row_count
-div_num = math.ceil(ws.max_row/row_count)
-mins = [i*row_count+2 for i in range(div_num)]
-maxs = [i*row_count+row_count+1 for i in range(div_num)]
-maxs[-1] = ws.max_row
-
-for i,j in zip(mins,maxs):
-    wb_new = Workbook()
-    ws_new = wb_new.create_sheet(sheet_name_new)
-    del wb_new["Sheet"]
+    #Get the header
+    header = []
+    for cell_row in ws[1]:
+        header.append(cell_row.value)
+        
+    #row_count
+    div_num = math.ceil(ws.max_row/row_count)
+    mins = [i*row_count+2 for i in range(div_num)]
+    maxs = [i*row_count+row_count+1 for i in range(div_num)]
+    maxs[-1] = ws.max_row
     
-    ws_new.append(header)
-    for cell_orig, cell_new in zip(ws[1], ws_new[1]):
-        cell_new.alignment = copy(cell_orig.alignment)
-        cell_new.number_format = copy(cell_orig.number_format)
-        cell_new.font = copy(cell_orig.font)
-        cell_new.fill = copy(cell_orig.fill)
-        cell_new.border = copy(cell_orig.border)
+    for i,j in zip(mins,maxs):
+        wb_new = Workbook()
+        ws_new = wb_new.create_sheet(sheet_name_new)
+        del wb_new["Sheet"]
         
-    for col_num in range(1,ws.max_column+1):
-        ws_new.column_dimensions[get_column_letter(col_num)].width = ws.column_dimensions[get_column_letter(col_num)].width
-        
-    # Iterate over the rows in the worksheet
-    for row in ws.iter_rows(min_row=i, max_row=j, values_only=False):
-        print(f"{row[0].row}.row from the total of {ws.max_row} rows")
- 
-        # Append the row to the workbook
-        ws_new.append([cell.value for cell in row])
-
-        # Copy styles
-        for cell_orig, cell_new in zip(row, ws_new[ws_new.max_row]):
+        ws_new.append(header)
+        for cell_orig, cell_new in zip(ws[1], ws_new[1]):
             cell_new.alignment = copy(cell_orig.alignment)
             cell_new.number_format = copy(cell_orig.number_format)
             cell_new.font = copy(cell_orig.font)
             cell_new.fill = copy(cell_orig.fill)
             cell_new.border = copy(cell_orig.border)
+            
+        for col_num in range(1,ws.max_column+1):
+            ws_new.column_dimensions[get_column_letter(col_num)].width = ws.column_dimensions[get_column_letter(col_num)].width
+            
+        # Iterate over the rows in the worksheet
+        for row in ws.iter_rows(min_row=i, max_row=j, values_only=False):
+            print(f"{row[0].row}.row from the total of {ws.max_row} rows")
 
-    wb_new.save(save_name + f"/{i}_{j}_{excel_name}.xlsx")
+            # Append the row to the workbook
+            ws_new.append([cell.value for cell in row])
 
+            # Copy styles
+            for cell_orig, cell_new in zip(row, ws_new[ws_new.max_row]):
+                cell_new.alignment = copy(cell_orig.alignment)
+                cell_new.number_format = copy(cell_orig.number_format)
+                cell_new.font = copy(cell_orig.font)
+                cell_new.fill = copy(cell_orig.fill)
+                cell_new.border = copy(cell_orig.border)
 
+        wb_new.save(save_name + f"/{i}_{j}_{excel_name}.xlsx")
+        
+elif method == "no_style":
+    #Excel load
+    wb = load_workbook(open_name)
+    ws = wb[sheet_name]
+
+    #Get the header
+    header = []
+    for cell_row in ws[1]:
+        header.append(cell_row.value)
+        
+    #row_count
+    div_num = math.ceil(ws.max_row/row_count)
+    mins = [i*row_count+2 for i in range(div_num)]
+    maxs = [i*row_count+row_count+1 for i in range(div_num)]
+    maxs[-1] = ws.max_row
+    
+    for i,j in zip(mins,maxs):
+        wb_new = Workbook()
+        ws_new = wb_new.create_sheet(sheet_name_new)
+        del wb_new["Sheet"]
+        
+        ws_new.append(header)
+        for cell_orig, cell_new in zip(ws[1], ws_new[1]):
+            cell_new.number_format = copy(cell_orig.number_format)
+            
+        for col_num in range(1,ws.max_column+1):
+            ws_new.column_dimensions[get_column_letter(col_num)].width = ws.column_dimensions[get_column_letter(col_num)].width
+            
+        # Iterate over the rows in the worksheet
+        for row in ws.iter_rows(min_row=i, max_row=j, values_only=False):
+            print(f"{row[0].row}.row from the total of {ws.max_row} rows")
+
+            # Append the row to the workbook
+            ws_new.append([cell.value for cell in row])
+
+            # Copy styles
+            for cell_orig, cell_new in zip(row, ws_new[ws_new.max_row]):
+                cell_new.number_format = copy(cell_orig.number_format)
+
+        wb_new.save(save_name + f"/{i}_{j}_{excel_name}.xlsx")
+
+else:
+    data = pd.read_excel(open_name, sheet_name=sheet_name)
+    
+    #Get the header
+    header = data.columns
+    
+    #row_count
+    div_num = math.ceil(data.shape[0]/row_count)
+    mins = [i*row_count for i in range(div_num)]
+    maxs = [i*row_count+row_count for i in range(div_num)]
+    maxs[-1] = data.shape[0]
+
+    for i,j in zip(mins,maxs):
+        print(f"{i+2} to {j+1} from the total of {data.shape[0]} rows")
+        wb_new = data.iloc[i:j-1]
+        wb_new.columns = header
+        wb_new.to_excel(save_name + f"{i}_{j}_{excel_name}.xlsx", index=False)
